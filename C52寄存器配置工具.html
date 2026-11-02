@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C52 单片机寄存器配置工具 (STC89C52 / AT89C52)</title>
+<style>
+:root{--pri:#2563eb;--pri2:#1e40af;--bg:#f4f6fb;--card:#fff;--bd:#e3e8f0;--tx:#1f2937;--mu:#6b7280;--ok:#16a34a;--warn:#d97706;--err:#dc2626;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
+header{background:linear-gradient(90deg,#1e3a8a,#2563eb);color:#fff;padding:12px 20px;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+header h1{margin:0;font-size:18px;display:inline-block}
+header .sub{opacity:.8;font-size:12px;margin-left:10px}
+.presets{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.presets span{font-size:12px;opacity:.85}
+.presets button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:3px 10px;cursor:pointer;font-size:12px}
+.presets button:hover{background:rgba(255,255,255,.3)}
+.layout{display:grid;grid-template-columns:170px minmax(0,1fr) 440px;gap:16px;padding:16px;align-items:start}
+nav{position:sticky;top:110px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px}
+nav a{display:block;padding:7px 10px;color:var(--tx);text-decoration:none;border-radius:6px;font-size:13px}
+nav a:hover{background:#eef2ff;color:var(--pri)}
+nav .sm{padding-left:22px;font-size:12px;color:var(--mu)}
+main{min-width:0}
+section{margin-bottom:26px}
+section>h2{font-size:17px;margin:0 0 10px;padding-left:10px;border-left:4px solid var(--pri)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card.inc{border-color:#93c5fd;box-shadow:0 0 0 2px #dbeafe}
+.card-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}
+.card-h h3{margin:0;font-size:16px;margin-right:6px}
+.card-h h3 small{font-weight:normal;color:var(--mu);font-size:13px;margin-left:6px}
+.tag{font-size:11px;padding:2px 7px;border-radius:10px;background:#f1f5f9;color:#475569;border:1px solid var(--bd)}
+.tag.b{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+.tag.stc{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+.card-h .sp{flex:1}
+.inclbl{font-size:12px;color:var(--pri);cursor:pointer;user-select:none}
+.grp{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:3px}
+.grp div{font-size:11px;text-align:center;color:var(--mu);border-bottom:2px solid #c7d2fe;padding-bottom:2px}
+.bits{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.bit{border:1px solid var(--bd);background:#f8fafc;border-radius:7px;padding:5px 2px;text-align:center;cursor:pointer;user-select:none;transition:.12s}
+.bit:hover{border-color:var(--pri)}
+.bit .d{font-size:10px;color:var(--mu)}
+.bit .n{font-weight:bold;font-size:13px;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bit .v{font-family:Consolas,monospace;font-size:15px}
+.bit.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.bit.on .d{color:#dbeafe}
+.bit.rsv{cursor:not-allowed;background:repeating-linear-gradient(45deg,#f1f5f9,#f1f5f9 4px,#e5e7eb 4px,#e5e7eb 8px);color:#9ca3af}
+.fields{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px}
+.fields label{font-size:12px;color:var(--mu);display:flex;flex-direction:column;gap:3px}
+select,input[type=number],input[type=text]{border:1px solid #cbd5e1;border-radius:6px;padding:4px 6px;font-size:13px;font-family:inherit;background:#fff}
+select:focus,input:focus{outline:2px solid #bfdbfe;border-color:var(--pri)}
+.valrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;background:#f8fafc;border-radius:8px;font-family:Consolas,monospace}
+.valrow input{width:64px;font-family:Consolas,monospace;font-weight:bold;color:var(--pri)}
+.valrow .bin{color:var(--mu)}
+.valrow code{flex:1;min-width:220px;color:#0f172a}
+.btn{background:var(--pri);color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:inherit}
+.btn:hover{background:var(--pri2)}
+.btn.g{background:#e2e8f0;color:#334155}
+.btn.g:hover{background:#cbd5e1}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--pri);font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}
+th,td{border:1px solid var(--bd);padding:5px 7px;text-align:left;vertical-align:top}
+th{background:#f1f5f9;font-weight:600}
+td.c,th.c{text-align:center}
+.mono{font-family:Consolas,monospace}
+.note{font-size:12.5px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;margin:8px 0;line-height:1.7}
+.note.i{background:#eff6ff;border-color:#bfdbfe}
+.calc{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end}
+.calc label{font-size:12px;color:var(--mu);display:flex;flex-direction:column;gap:3px}
+.res{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
+.res div{background:#f1f5f9;border-radius:8px;padding:6px 12px;font-size:12px;color:var(--mu)}
+.res b{display:block;font-size:16px;color:var(--tx);font-family:Consolas,monospace}
+.ok{color:var(--ok)!important}.wa{color:var(--warn)!important}.er{color:var(--err)!important}
+pre.code{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:12px;font-family:Consolas,"Courier New",monospace;font-size:12.5px;line-height:1.55;overflow:auto;white-space:pre;margin:8px 0 0}
+pre .cm{color:#86efac}pre .kw{color:#93c5fd}pre .pp{color:#f9a8d4}pre .nu{color:#fcd34d}
+aside{position:sticky;top:110px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;max-height:calc(100vh - 126px);display:flex;flex-direction:column}
+aside h3{margin:0 0 8px;font-size:15px}
+aside .tb{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
+aside pre.code{flex:1;min-height:200px}
+tr.sel td{background:#dbeafe}
+tbody tr.clk{cursor:pointer}
+tbody tr.clk:hover td{background:#f1f5f9}
+@media(max-width:1250px){.layout{grid-template-columns:150px minmax(0,1fr)}aside{grid-column:1/-1;position:static;max-height:none}}
+@media(max-width:760px){.layout{grid-template-columns:1fr}nav{display:none}.bit .n{font-size:11px}}
+@media print{header,nav,aside{display:none}.layout{display:block}.card{break-inside:avoid}details{display:block}}
+</style>
+</head>
+<body>
+<header>
+  <h1>C52 单片机寄存器配置工具</h1><span class="sub">STC89C52RC / AT89C52 (8052内核) · 点击位即可配置 · 自动生成 Keil C51 代码</span>
+  <div class="presets" id="presets"><span>常用场景一键配置：</span></div>
+</header>
+<div class="layout">
+<nav>
+  <a href="#sec-int">① 中断系统</a>
+  <a class="sm" href="#tbl-vec">中断向量表</a>
+  <a class="sm" href="#reg-IE">IE / IP / IPH</a>
+  <a class="sm" href="#reg-XICON">XICON (INT2/3)</a>
+  <a href="#sec-timer">② 定时器/计数器</a>
+  <a class="sm" href="#reg-TMOD">TMOD / TCON</a>
+  <a class="sm" href="#reg-T2CON">T2CON / T2MOD</a>
+  <a class="sm" href="#calc-timer">初值计算器</a>
+  <a href="#sec-uart">③ 串行通信</a>
+  <a class="sm" href="#reg-SCON">SCON / PCON</a>
+  <a class="sm" href="#calc-baud">波特率计算器</a>
+  <a href="#sec-io">④ 并行 I/O 口</a>
+  <a href="#sec-sys">⑤ 系统/看门狗</a>
+  <a href="#sec-sfr">⑥ SFR 地址总表</a>
+</nav>
+<main id="main">
+<!-- SECTIONS -->
+
+<section id="sec-int">
+  <h2>① 中断系统</h2>
+  <div class="card" id="tbl-vec">
+    <div class="card-h"><h3>中断源 / 向量 / 中断号 对照表</h3><span class="tag">自然优先级: 中断号越小越高</span></div>
+    <table>
+      <thead><tr><th>中断源</th><th class="c">中断号<br>interrupt n</th><th class="c">入口地址</th><th>允许位</th><th>优先级位</th><th>请求标志</th><th>标志清除</th><th>引脚/说明</th></tr></thead>
+      <tbody>
+      <tr><td>外部中断0 INT0</td><td class="c mono">0</td><td class="c mono">0003H</td><td>EX0 (IE.0)</td><td>PX0 / PX0H</td><td>IE0</td><td>边沿触发:硬件自动清零；电平触发:需撤除引脚低电平</td><td>P3.2，IT0 选触发方式</td></tr>
+      <tr><td>定时器0 T0</td><td class="c mono">1</td><td class="c mono">000BH</td><td>ET0 (IE.1)</td><td>PT0 / PT0H</td><td>TF0</td><td>进中断硬件自动清零</td><td>模式0/1需在中断里重装初值</td></tr>
+      <tr><td>外部中断1 INT1</td><td class="c mono">2</td><td class="c mono">0013H</td><td>EX1 (IE.2)</td><td>PX1 / PX1H</td><td>IE1</td><td>同 INT0</td><td>P3.3，IT1 选触发方式</td></tr>
+      <tr><td>定时器1 T1</td><td class="c mono">3</td><td class="c mono">001BH</td><td>ET1 (IE.3)</td><td>PT1 / PT1H</td><td>TF1</td><td>进中断硬件自动清零</td><td>常作波特率发生器(此时不开 ET1)</td></tr>
+      <tr><td>串口 UART</td><td class="c mono">4</td><td class="c mono">0023H</td><td>ES (IE.4)</td><td>PS / PSH</td><td>RI / TI</td><td class="er"><b>必须软件清零</b></td><td>P3.0 RXD / P3.1 TXD</td></tr>
+      <tr><td>定时器2 T2</td><td class="c mono">5</td><td class="c mono">002BH</td><td>ET2 (IE.5)</td><td>PT2 / PT2H</td><td>TF2 / EXF2</td><td class="er"><b>必须软件清零</b></td><td>52 特有；P1.0 T2 / P1.1 T2EX</td></tr>
+      <tr><td>外部中断2 INT2 <span class="tag stc">STC</span></td><td class="c mono">6</td><td class="c mono">0033H</td><td>EX2 (XICON.2)</td><td>PX2 / PX2H</td><td>IE2</td><td>边沿触发硬件清零</td><td>P4.3 (仅 PLCC/LQFP 封装)</td></tr>
+      <tr><td>外部中断3 INT3 <span class="tag stc">STC</span></td><td class="c mono">7</td><td class="c mono">003BH</td><td>EX3 (XICON.6)</td><td>PX3 / PX3H</td><td>IE3</td><td>边沿触发硬件清零</td><td>P4.2 (仅 PLCC/LQFP 封装)</td></tr>
+      </tbody>
+    </table>
+    <div class="note">⚠ 开任何中断都需要 <b>两级开关</b>：总开关 <b>EA=1</b> + 对应分开关（如 ET0=1）。中断函数格式：<span class="mono">void 函数名(void) interrupt n [using m]</span>，中断函数不能有参数和返回值。<br>
+    优先级：IP 两级（标准51）；STC89 增加 IPH 构成四级：<b>{IPH.x, IP.x}</b> = 00 最低 → 11 最高。同级按自然优先级（中断号小者先响应）。</div>
+  </div>
+  <div id="regs-int"></div>
+</section>
+
+<section id="sec-timer">
+  <h2>② 定时器 / 计数器 (T0、T1、T2)</h2>
+  <div class="note i">定时器模式速查：<b>模式0</b> 13位(最大8192)；<b>模式1</b> 16位(最大65536，最常用)；<b>模式2</b> 8位自动重装(最大256，常用于波特率)；<b>模式3</b> 仅 T0 拆为两个8位(TH0 借用 TR1/TF1)。<br>
+  机器周期 = 12 / fosc（12T 模式）。11.0592MHz → 1.085μs；12MHz → 1μs。<b>初值 = 最大计数值 − 定时时间/机器周期</b>。</div>
+  <div id="regs-timer"></div>
+  <div class="card">
+    <div class="card-h"><h3>T2 工作方式选择表</h3><span class="tag">由 T2CON 决定</span></div>
+    <table><thead><tr><th class="c">RCLK + TCLK</th><th class="c">CP/RL2</th><th class="c">TR2</th><th>工作方式</th><th>典型 T2CON 值</th></tr></thead>
+    <tbody>
+    <tr><td class="c">0</td><td class="c">0</td><td class="c">1</td><td>16位自动重装（溢出时 RCAP2H/L → TH2/TL2）</td><td class="mono">0x04</td></tr>
+    <tr><td class="c">0</td><td class="c">1</td><td class="c">1</td><td>16位捕获（EXEN2=1 时 T2EX 下降沿把 TH2/TL2 捕获到 RCAP2H/L）</td><td class="mono">0x0D (含EXEN2)</td></tr>
+    <tr><td class="c">1</td><td class="c">×</td><td class="c">1</td><td>串口波特率发生器（RCLK/TCLK 分别对应接收/发送）</td><td class="mono">0x34</td></tr>
+    <tr><td class="c">×</td><td class="c">×</td><td class="c">0</td><td>关闭</td><td class="mono">0x00</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card" id="calc-timer">
+    <div class="card-h"><h3>⏱ 定时器初值计算器</h3><span class="tag">自动生成初始化函数 + 中断函数</span></div>
+    <div class="calc">
+      <label>晶振 fosc (MHz)<input type="number" id="tc_fosc" value="11.0592" step="0.0001" style="width:100px"></label>
+      <label>时钟模式<select id="tc_clk"><option value="12">12T (默认)</option><option value="6">6T (STC 双倍速)</option></select></label>
+      <label>定时器<select id="tc_tmr"><option value="0">T0</option><option value="1">T1</option><option value="2">T2 (16位自动重装)</option></select></label>
+      <label>工作模式<select id="tc_mode"><option value="1">模式1 (16位)</option><option value="0">模式0 (13位)</option><option value="2">模式2 (8位自动重装)</option></select></label>
+      <label>定时时间<span><input type="number" id="tc_time" value="1" step="any" style="width:90px"> <select id="tc_unit"><option value="ms">ms</option><option value="us">μs</option></select></span></label>
+      <label>&nbsp;<span><input type="checkbox" id="tc_int" checked> 使用中断</span></label>
+    </div>
+    <div class="res" id="tc_res"></div>
+    <div class="tb" style="margin-top:8px"><button class="btn" data-copy="tc_code">复制代码</button></div>
+    <pre class="code" id="tc_code"></pre>
+  </div>
+</section>
+
+<section id="sec-uart">
+  <h2>③ 串行通信 (UART)</h2>
+  <div class="card">
+    <div class="card-h"><h3>串口工作方式表</h3><span class="tag">SCON 的 SM0 SM1</span></div>
+    <table><thead><tr><th class="c">SM0 SM1</th><th class="c">方式</th><th>功能</th><th>波特率</th><th>常用 SCON 值</th></tr></thead>
+    <tbody>
+    <tr><td class="c mono">0 0</td><td class="c">0</td><td>同步移位寄存器（扩展 74HC164/165）</td><td>fosc/12 固定</td><td class="mono">0x00 / 0x10</td></tr>
+    <tr><td class="c mono">0 1</td><td class="c">1</td><td><b>10位异步 UART</b>（1起始+8数据+1停止）— 最常用</td><td>可变：T1 或 T2 溢出率决定</td><td class="mono"><b>0x50</b> (允许接收)</td></tr>
+    <tr><td class="c mono">1 0</td><td class="c">2</td><td>11位异步（第9位 TB8/RB8，可作奇偶校验/多机）</td><td>fosc/64 (SMOD=0) 或 fosc/32 (SMOD=1)</td><td class="mono">0x90</td></tr>
+    <tr><td class="c mono">1 1</td><td class="c">3</td><td>11位异步，同方式2</td><td>可变，同方式1</td><td class="mono">0xD0</td></tr>
+    </tbody></table>
+    <div class="note">波特率公式（方式1/3）：T1 模式2 → <span class="mono">Baud = 2^SMOD × fosc / (32 × 12 × (256 − TH1))</span>；T2 → <span class="mono">Baud = fosc / (32 × (65536 − RCAP2))</span>。<br>串口通信请用 <b>11.0592MHz</b> 晶振，12MHz 下 9600 误差约 8.5%，通信不可靠。发送：写 SBUF → 等 TI=1 → 软件清 TI；接收：RI=1 → 读 SBUF → 软件清 RI。</div>
+  </div>
+  <div id="regs-uart"></div>
+  <div class="card" id="calc-baud">
+    <div class="card-h"><h3>📡 波特率计算器</h3><span class="tag">点击表格行快速选择</span></div>
+    <div class="calc">
+      <label>晶振 fosc (MHz)<input type="number" id="bd_fosc" value="11.0592" step="0.0001" style="width:100px"></label>
+      <label>时钟模式<select id="bd_clk"><option value="12">12T</option><option value="6">6T</option></select></label>
+      <label>波特率发生器<select id="bd_src"><option value="1">T1 模式2</option><option value="2">T2</option></select></label>
+      <label>SMOD 倍速 (T1)<select id="bd_smod"><option value="0">SMOD=0</option><option value="1">SMOD=1 (加倍)</option></select></label>
+      <label>波特率<input type="number" id="bd_baud" value="9600" style="width:90px"></label>
+      <label>串口方式<select id="bd_mode"><option value="1">方式1 (8位)</option><option value="3">方式3 (9位)</option></select></label>
+      <label>&nbsp;<span><input type="checkbox" id="bd_int" checked> 接收用中断</span></label>
+    </div>
+    <div class="res" id="bd_res"></div>
+    <table id="bd_tbl"></table>
+    <div class="tb" style="margin-top:8px"><button class="btn" data-copy="bd_code">复制代码</button></div>
+    <pre class="code" id="bd_code"></pre>
+  </div>
+</section>
+
+<section id="sec-io">
+  <h2>④ 并行 I/O 口 (P0 ~ P4)</h2>
+  <div class="card">
+    <div class="card-h"><h3>I/O 口结构与第二功能</h3></div>
+    <table><thead><tr><th>端口</th><th>结构</th><th>第二功能</th><th>注意事项</th></tr></thead>
+    <tbody>
+    <tr><td><b>P0</b> (80H)</td><td>开漏输出，<b>无内部上拉</b></td><td>外部总线时作 AD0~AD7 地址/数据复用</td><td>作普通 I/O 必须外接 10kΩ 上拉电阻(排阻)；常用于 LCD1602/12864 数据线、数码管段选</td></tr>
+    <tr><td><b>P1</b> (90H)</td><td>准双向口，内部上拉</td><td>P1.0 = T2 (T2 计数输入/时钟输出)，P1.1 = T2EX (捕获/重装触发)</td><td>最“干净”的通用 I/O</td></tr>
+    <tr><td><b>P2</b> (A0H)</td><td>准双向口，内部上拉</td><td>外部总线时作高8位地址 A8~A15</td><td>常用于 74HC138 位选、LCD 控制线</td></tr>
+    <tr><td><b>P3</b> (B0H)</td><td>准双向口，内部上拉</td><td>P3.0 RXD · P3.1 TXD · P3.2 INT0 · P3.3 INT1 · P3.4 T0 · P3.5 T1 · P3.6 WR · P3.7 RD</td><td>用第二功能时该位须保持写“1”</td></tr>
+    <tr><td><b>P4</b> (E8H) <span class="tag stc">STC</span></td><td>准双向口</td><td>P4.2 = INT3，P4.3 = INT2</td><td>仅 PLCC44/LQFP44 封装有；需自行 <span class="mono">sfr P4 = 0xE8;</span></td></tr>
+    </tbody></table>
+    <div class="note">⚠ 准双向口<b>读引脚前必须先写 1</b>（如 <span class="mono">P1 = 0xFF; key = P1;</span>）。准双向口输出高电平驱动能力弱（几十 μA），驱动 LED 推荐“低电平点亮”（灌电流）。<br>
+    并行总线访问外部器件：<span class="mono">#include &lt;absacc.h&gt;</span> 后用 <span class="mono">XBYTE[0x7FFF] = dat;</span> 自动产生 WR/RD 时序。</div>
+  </div>
+  <div id="regs-io"></div>
+</section>
+
+<section id="sec-sys">
+  <h2>⑤ 系统 / 电源 / 看门狗</h2>
+  <div id="regs-sys"></div>
+</section>
+
+<section id="sec-sfr">
+  <h2>⑥ SFR 特殊功能寄存器地址总表</h2>
+  <div class="card"><div class="note i">地址末位为 0 或 8 的 SFR 可位寻址（可直接用 sbit 操作某一位）。点击名称跳转到对应配置卡片。</div><table id="sfr_tbl"></table></div>
+</section>
+</main>
+<aside>
+  <h3>🧾 生成的初始化代码</h3>
+  <div class="tb">
+    <select id="hdr"><option value="REG52.H">REG52.H</option><option value="REGX52.H">REGX52.H</option></select>
+    <label style="font-size:12px"><input type="checkbox" id="isr" checked> 中断函数框架</label>
+    <button class="btn" data-copy="out">复制</button>
+    <button class="btn g" id="clr">全部复位</button>
+  </div>
+  <div style="font-size:12px;color:var(--mu)">勾选卡片右上角“加入代码”或修改任意位即会加入</div>
+  <pre class="code" id="out"></pre>
+</aside>
+</div>
+<script>
+/* ===== 寄存器数据: bits 按 D7→D0 排列; null = 保留位 ===== */
+const P = (n,d)=>({n,d});
+const REGS = [
+// ---------- 中断 ----------
+{id:'IE',addr:'A8H',ba:1,sec:'int',t:'中断允许寄存器',rst:0x00,sb:1,bits:[
+ P('EA','总中断允许。1=开放所有已单独允许的中断；0=屏蔽全部中断'),null,
+ P('ET2','定时器2中断允许 (interrupt 5)'),P('ES','串口中断允许 (interrupt 4)'),
+ P('ET1','定时器1中断允许 (interrupt 3)'),P('EX1','外部中断1允许 (interrupt 2)'),
+ P('ET0','定时器0中断允许 (interrupt 1)'),P('EX0','外部中断0允许 (interrupt 0)')]},
+{id:'IP',addr:'B8H',ba:1,sec:'int',t:'中断优先级寄存器(低位)',rst:0x00,sb:1,bits:[null,null,
+ P('PT2','定时器2优先级 1=高'),P('PS','串口优先级 1=高'),P('PT1','定时器1优先级 1=高'),
+ P('PX1','外部中断1优先级 1=高'),P('PT0','定时器0优先级 1=高'),P('PX0','外部中断0优先级 1=高')]},
+{id:'IPH',addr:'B7H',ba:0,sec:'int',stc:1,t:'中断优先级高位 (与IP组成4级)',rst:0x00,bits:[
+ P('PX3H','INT3 优先级高位'),P('PX2H','INT2 优先级高位'),P('PT2H','T2 优先级高位'),P('PSH','串口优先级高位'),
+ P('PT1H','T1 优先级高位'),P('PX1H','INT1 优先级高位'),P('PT0H','T0 优先级高位'),P('PX0H','INT0 优先级高位')],
+ note:'{IPH.x, IP.x}：00=级别0(最低) 01=级别1 10=级别2 11=级别3(最高)。INT2/INT3 的低位在 XICON 中 (PX2/PX3)。'},
+{id:'XICON',addr:'C0H',ba:1,sec:'int',stc:1,t:'辅助中断控制 (INT2 / INT3)',rst:0x00,bits:[
+ P('PX3','INT3 优先级低位'),P('EX3','INT3 中断允许 (interrupt 7, P4.2)'),P('IE3','INT3 请求标志'),P('IT3','INT3 触发方式'),
+ P('PX2','INT2 优先级低位'),P('EX2','INT2 中断允许 (interrupt 6, P4.3)'),P('IE2','INT2 请求标志'),P('IT2','INT2 触发方式')],
+ f:[{k:'IT3',hi:4,lo:4,l:'INT3 触发',o:[['低电平触发'],['下降沿触发']]},{k:'IT2',hi:0,lo:0,l:'INT2 触发',o:[['低电平触发'],['下降沿触发']]}],
+ note:'Keil 自带头文件无 XICON，需声明 sfr XICON = 0xC0; 如需位操作再 sbit EX2 = XICON^2; 等。'},
+// ---------- 定时器 ----------
+{id:'TMOD',addr:'89H',ba:0,sec:'timer',t:'定时器/计数器模式寄存器',rst:0x00,
+ grp:[['定时器 T1',4],['定时器 T0',4]],bits:[
+ P('GATE','T1 门控：0=仅 TR1 控制启停；1=TR1=1 且 INT1(P3.3) 为高电平才计数(测脉宽)'),
+ P('C/T','T1 功能：0=定时(数机器周期)；1=计数(数 P3.5 引脚下降沿)'),
+ P('M1','T1 模式选择高位'),P('M0','T1 模式选择低位'),
+ P('GATE','T0 门控：0=仅 TR0 控制；1=TR0=1 且 INT0(P3.2) 为高电平才计数'),
+ P('C/T','T0 功能：0=定时；1=计数(数 P3.4 引脚下降沿)'),
+ P('M1','T0 模式选择高位'),P('M0','T0 模式选择低位')],
+ f:[{k:'T1门控',hi:7,lo:7,l:'T1 GATE',o:[['TR1控制'],['TR1+INT1控制']]},
+    {k:'T1',hi:6,lo:6,l:'T1 C/T',o:[['定时'],['计数P3.5']]},
+    {k:'T1',hi:5,lo:4,l:'T1 模式 M1M0',a:1,o:[['模式0(13位)'],['模式1(16位)'],['模式2(8位自动重装)'],['模式3(停止)']]},
+    {k:'T0门控',hi:3,lo:3,l:'T0 GATE',o:[['TR0控制'],['TR0+INT0控制']]},
+    {k:'T0',hi:2,lo:2,l:'T0 C/T',o:[['定时'],['计数P3.4']]},
+    {k:'T0',hi:1,lo:0,l:'T0 模式 M1M0',a:1,o:[['模式0(13位)'],['模式1(16位)'],['模式2(8位自动重装)'],['模式3(双8位)']]}],
+ note:'TMOD 不可位寻址！只配置一个定时器时推荐用“与或”写法避免影响另一个：TMOD &= 0xF0; TMOD |= 0x01;'},
+{id:'TCON',addr:'88H',ba:1,sec:'timer',t:'定时器控制寄存器 (含外部中断标志)',rst:0x00,sb:1,
+ grp:[['定时器控制',4],['外部中断控制',4]],bits:[
+ P('TF1','T1 溢出标志：硬件置1；进中断时硬件清0(查询方式需软件清0)'),P('TR1','T1 运行控制：1=启动 0=停止'),
+ P('TF0','T0 溢出标志：同 TF1'),P('TR0','T0 运行控制：1=启动 0=停止'),
+ P('IE1','INT1 请求标志：硬件置1，边沿触发时进中断硬件清0'),P('IT1','INT1 触发方式：0=低电平 1=下降沿'),
+ P('IE0','INT0 请求标志'),P('IT0','INT0 触发方式：0=低电平 1=下降沿')],
+ f:[{k:'IT1',hi:2,lo:2,l:'INT1 触发',o:[['低电平触发'],['下降沿触发']]},{k:'IT0',hi:0,lo:0,l:'INT0 触发',o:[['低电平触发'],['下降沿触发']]}],
+ note:'初始化时一般用位操作：TR0 = 1; IT0 = 1; 先装初值(TH/TL)再置 TR 启动。'},
+{id:'T2CON',addr:'C8H',ba:1,sec:'timer',t:'定时器2控制寄存器',rst:0x00,sb:1,bits:[
+ P('TF2','T2 溢出标志，<b>必须软件清零</b>；RCLK/TCLK=1 时不置位'),
+ P('EXF2','T2 外部标志：EXEN2=1 且 T2EX(P1.1)出现下降沿时置1，必须软件清零'),
+ P('RCLK','串口接收时钟：1=用 T2 溢出作串口方式1/3 接收波特率；0=用 T1'),
+ P('TCLK','串口发送时钟：1=用 T2 溢出作发送波特率；0=用 T1'),
+ P('EXEN2','T2 外部允许：1=T2EX 下降沿触发捕获或重装'),P('TR2','T2 运行控制：1=启动'),
+ P('C/T2','0=定时器；1=计数器(数 P1.0 下降沿)'),P('CP/RL2','1=捕获方式；0=自动重装方式（RCLK/TCLK=1 时忽略，强制自动重装）')],
+ sbn:{'C/T2':'C_T2','CP/RL2':'CP_RL2'}},
+{id:'T2MOD',addr:'C9H',ba:0,sec:'timer',t:'定时器2模式寄存器',rst:0x00,bits:[null,null,null,null,null,null,
+ P('T2OE','T2 时钟输出允许：1=P1.0 输出方波(可编程时钟输出)'),P('DCEN','向下计数允许：1=T2 可由 T2EX 电平控制加/减计数')],
+ note:'Keil 的 REG52.H 没有定义 T2MOD (REGX52.H 有)，使用 REG52.H 时需 sfr T2MOD = 0xC9;'},
+// ---------- 串口 ----------
+{id:'SCON',addr:'98H',ba:1,sec:'uart',t:'串口控制寄存器',rst:0x00,sb:1,bits:[
+ P('SM0','方式选择高位 (STC: SMOD0=1 时此位为帧错误标志 FE)'),P('SM1','方式选择低位'),
+ P('SM2','多机通信控制：方式2/3 下 1=只有 RB8=1 才置 RI；方式1 下 1=收到有效停止位才置 RI；一般为 0'),
+ P('REN','允许接收：1=允许串口接收(要接收必须置1)'),P('TB8','方式2/3 发送的第9位数据(校验位/地址帧标志)'),
+ P('RB8','方式2/3 接收到的第9位数据；方式1 为停止位'),P('TI','发送中断标志：发完一帧硬件置1，<b>必须软件清零</b>'),
+ P('RI','接收中断标志：收完一帧硬件置1，<b>必须软件清零</b>')],
+ f:[{k:'串口',hi:7,lo:6,l:'工作方式 SM0 SM1',a:1,o:[['方式0(同步移位)'],['方式1(8位UART)'],['方式2(9位,固定波特率)'],['方式3(9位UART)']]}]},
+{id:'PCON',addr:'87H',ba:0,sec:'uart',t:'电源控制寄存器 (含波特率加倍)',rst:0x00,bits:[
+ P('SMOD','波特率加倍：1=串口方式1/2/3 波特率×2'),P('SMOD0','<span class="tag stc">STC</span> 1=SCON.7 作帧错误检测 FE；0=SCON.7 为 SM0'),null,
+ P('POF','<span class="tag stc">STC</span> 上电复位标志：上电后为1，需软件清0，可用来区分冷/热启动'),
+ P('GF1','通用标志位1 (用户自由使用)'),P('GF0','通用标志位0'),
+ P('PD','掉电模式：置1进入掉电(时钟停止)，只能由外部中断或复位唤醒'),P('IDL','空闲模式：置1进入空闲(CPU停,外设运行)，任意中断唤醒')],
+ note:'PCON 不可位寻址，修改 SMOD 用 PCON |= 0x80; 或 PCON &= 0x7F;'},
+// ---------- 系统 ----------
+{id:'PSW',addr:'D0H',ba:1,sec:'sys',t:'程序状态字',rst:0x00,sb:1,bits:[
+ P('CY','进位/借位标志'),P('AC','辅助进位(半进位，BCD 调整用)'),P('F0','用户标志位0'),
+ P('RS1','工作寄存器组选择高位'),P('RS0','工作寄存器组选择低位'),P('OV','溢出标志(有符号运算)'),P('F1','用户标志位1'),P('P','奇偶标志：A 中 1 的个数为奇数时 P=1(只读,可用于串口奇偶校验)')],
+ f:[{k:'寄存器组',hi:4,lo:3,l:'RS1 RS0',a:1,o:[['第0组(00H-07H)'],['第1组(08H-0FH)'],['第2组(10H-17H)'],['第3组(18H-1FH)']]}],
+ note:'C 语言中一般不手动改 PSW，中断函数可用 using n 让编译器自动切换寄存器组。'},
+{id:'AUXR',addr:'8EH',ba:0,sec:'sys',stc:1,t:'辅助寄存器',rst:0x00,bits:[null,null,null,null,null,null,
+ P('EXTRAM','0=使用内部扩展 RAM(256B xdata，MOVX 访问)；1=禁用内部扩展RAM，访问外部 RAM'),
+ P('ALEOFF','1=禁止 ALE 引脚输出(降低 EMI)；0=ALE 正常输出 fosc/6')]},
+{id:'WDT_CONTR',addr:'E1H',ba:0,sec:'sys',stc:1,t:'看门狗控制寄存器',rst:0x00,bits:[null,null,
+ P('EN_WDT','1=启动看门狗 (启动后软件无法关闭)'),P('CLR_WDT','写1清零看门狗计数(喂狗)，硬件自动清0'),
+ P('IDLE_WDT','1=空闲模式下看门狗继续计数'),P('PS2','预分频高位'),P('PS1','预分频中位'),P('PS0','预分频低位')],
+ f:[{k:'预分频',hi:2,lo:0,l:'预分频 PS2~PS0 (溢出时间 @11.0592MHz)',a:1,o:[['2分频 71.1ms'],['4分频 142.2ms'],['8分频 284.4ms'],['16分频 568.8ms'],['32分频 1.1377s'],['64分频 2.2755s'],['128分频 4.5511s'],['256分频 9.1022s']]}],
+ note:'溢出时间 = 12 × 预分频 × 32768 / fosc。喂狗：在主循环中定期重新写入同一值（CLR_WDT=1），如 WDT_CONTR = 0x35;'},
+];
+// ---------- I/O 口 ----------
+const ALT = {P0:['AD7','AD6','AD5','AD4','AD3','AD2','AD1','AD0'],P1:['','','','','','','T2EX','T2'],
+ P2:['A15','A14','A13','A12','A11','A10','A9','A8'],P3:['RD','WR','T1','T0','INT1','INT0','TXD','RXD'],P4:['','','','','INT2','INT3','','']};
+const PADDR = {P0:'80H',P1:'90H',P2:'A0H',P3:'B0H',P4:'E8H'};
+['P0','P1','P2','P3','P4'].forEach(p=>{
+  const bits=[];for(let i=7;i>=0;i--){const a=ALT[p][7-i];
+    if(p==='P4'&&i>3){bits.push(null);continue;}
+    bits.push(P(p+'.'+i,'1=高电平/作输入, 0=输出低电平'+(a?'；第二功能: <b>'+a+'</b>':'')));}
+  REGS.push({id:p,addr:PADDR[p],ba:1,sec:'io',port:1,stc:p==='P4'?1:0,t:'I/O 端口 '+p+(p==='P0'?' (开漏,需上拉)':''),rst:p==='P4'?0x0F:0xFF,bits,
+    note:'点亮的位 = 输出 1；灰色 = 输出 0（低电平）。'});
+});
+
+/* ===== 状态与渲染 ===== */
+const S = {}, INC = {};
+const $ = id=>document.getElementById(id);
+const hex = (v,n=2)=>'0x'+v.toString(16).toUpperCase().padStart(n,'0');
+const bin = v=>{const s=v.toString(2).padStart(8,'0');return s.slice(0,4)+' '+s.slice(4)+'B';};
+const rmask = r=>r.bits.reduce((m,b,i)=>b?m:(m|(1<<(7-i))),0);
+const byId = id=>REGS.find(r=>r.id===id);
+function fval(f,v){return (v>>f.lo)&((1<<(f.hi-f.lo+1))-1);}
+
+function summary(r,v){
+  if(r.port){const lo=[];for(let i=7;i>=0;i--)if(r.bits[7-i]&&!(v>>i&1))lo.push(r.id+'.'+i);
+    return lo.length?('低电平: '+lo.join(' ')):'全部输出高电平';}
+  const parts=[],cov=new Set();
+  (r.f||[]).forEach(f=>{for(let b=f.lo;b<=f.hi;b++)cov.add(b);const x=fval(f,v);
+    if(f.a||x)parts.push((f.a?f.k+':':'')+f.o[x][0]);});
+  const set=[];for(let i=7;i>=0;i--){const b=r.bits[7-i];if(b&&!cov.has(i)&&(v>>i&1))set.push(b.n);}
+  if(set.length)parts.push(set.join(' ')+'=1');
+  return parts.join(', ')||'全部为0';
+}
+function sbName(r,n){return (r.sbn&&r.sbn[n])||n;}
+
+function renderCard(r){
+  const el=document.createElement('div');el.className='card';el.id='reg-'+r.id;
+  let h=`<div class="card-h"><h3>${r.id}<small>${r.t}</small></h3><span class="tag">地址 ${r.addr}</span>`+
+    `<span class="tag ${r.ba?'b':''}">${r.ba?'可位寻址':'不可位寻址'}</span><span class="tag">复位 ${hex(r.rst)}</span>`+
+    (r.stc?'<span class="tag stc">STC89 扩展</span>':'')+`<span class="sp"></span><label class="inclbl"><input type="checkbox" data-inc="${r.id}"> 加入代码</label></div>`;
+  if(r.grp){h+='<div class="grp">'+r.grp.map(g=>`<div style="grid-column:span ${g[1]}">${g[0]}</div>`).join('')+'</div>';}
+  h+='<div class="bits">'+r.bits.map((b,i)=>{const bit=7-i;
+    return b?`<div class="bit" data-r="${r.id}" data-b="${bit}" title="${b.d.replace(/<[^>]+>/g,'')}"><div class="d">D${bit}</div><div class="n">${b.n}</div><div class="v">0</div></div>`
+            :`<div class="bit rsv"><div class="d">D${bit}</div><div class="n">—</div><div class="v">-</div></div>`;}).join('')+'</div>';
+  if(r.f){h+='<div class="fields">'+r.f.map((f,j)=>`<label>${f.l}<select data-r="${r.id}" data-f="${j}">`+
+    f.o.map((o,k)=>`<option value="${k}">${(f.hi>f.lo?k.toString(2).padStart(f.hi-f.lo+1,'0')+' → ':(k+' → '))}${o[0]}</option>`).join('')+'</select></label>').join('')+'</div>';}
+  h+=`<div class="valrow">值 <input type="text" data-hex="${r.id}" maxlength="4"><span class="bin" id="bin-${r.id}"></span><code id="line-${r.id}"></code>`+
+     `<button class="btn g" data-rst="${r.id}">复位</button><button class="btn g" data-cp="${r.id}">复制</button></div>`;
+  h+='<details'+(r.port?'':' open')+'><summary>位功能说明</summary><table><tr><th class="c" style="width:44px">位</th><th style="width:90px">名称</th><th>功能</th></tr>'+
+    r.bits.map((b,i)=>`<tr><td class="c mono">D${7-i}</td><td class="mono"><b>${b?b.n:'—'}</b></td><td>${b?b.d:'保留'}</td></tr>`).join('')+'</table>'+
+    (r.note?`<div class="note">${r.note}</div>`:'')+'</details>';
+  el.innerHTML=h;return el;
+}
+function lineOf(r){const v=S[r.id];let s=`${r.id} = ${hex(v)};   // ${summary(r,v)}`;
+  if(r.sb){const on=[];for(let i=7;i>=0;i--){const b=r.bits[7-i];if(b&&(v>>i&1))on.push(sbName(r,b.n)+' = 1;');}
+    if(on.length)s+='\n位写法: '+on.join(' ');}
+  return s;}
+function update(id){
+  const r=byId(id),v=S[id],card=$('reg-'+id);
+  card.querySelectorAll('.bit[data-b]').forEach(e=>{const on=v>>(+e.dataset.b)&1;e.classList.toggle('on',!!on);e.querySelector('.v').textContent=on;});
+  card.querySelectorAll('select[data-f]').forEach(e=>{e.value=fval(r.f[+e.dataset.f],v);});
+  const hx=card.querySelector('[data-hex]');if(document.activeElement!==hx)hx.value=hex(v);
+  $('bin-'+id).textContent=bin(v);
+  $('line-'+id).textContent=lineOf(r);$('line-'+id).style.whiteSpace='pre-wrap';
+  card.querySelector('[data-inc]').checked=!!INC[id];card.classList.toggle('inc',!!INC[id]);
+}
+function setReg(id,v,inc=true){const r=byId(id);S[id]=(v&~rmask(r))&0xFF;if(inc)INC[id]=true;update(id);}
+function refreshAll(){REGS.forEach(r=>update(r.id));gen();}
+
+REGS.forEach(r=>{S[r.id]=r.rst;$('regs-'+r.sec).appendChild(renderCard(r));});
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.bit[data-b]');
+  if(b){const id=b.dataset.r;setReg(id,S[id]^(1<<+b.dataset.b));gen();return;}
+  const rs=e.target.closest('[data-rst]');if(rs){const id=rs.dataset.rst;S[id]=byId(id).rst;INC[id]=false;update(id);gen();return;}
+  const cp=e.target.closest('[data-cp]');if(cp){copyText(lineOf(byId(cp.dataset.cp)).split('\n')[0],cp);return;}
+  const cc=e.target.closest('[data-copy]');if(cc){copyText($(cc.dataset.copy).textContent,cc);return;}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.f!==undefined&&t.dataset.r){const r=byId(t.dataset.r),f=r.f[+t.dataset.f];
+    const m=((1<<(f.hi-f.lo+1))-1)<<f.lo;setReg(r.id,(S[r.id]&~m)|(+t.value<<f.lo));gen();}
+  else if(t.dataset.inc){INC[t.dataset.inc]=t.checked;update(t.dataset.inc);gen();}
+  else if(t.dataset.hex){const m=t.value.trim().match(/^(0x)?([0-9a-f]{1,2})h?$/i);
+    if(m)setReg(t.dataset.hex,parseInt(m[2],16));else update(t.dataset.hex);gen();}
+});
+
+function copyText(t,btn){const old=btn.textContent;const done=()=>{btn.textContent='已复制 ✓';setTimeout(()=>btn.textContent=old,1200);};
+  const fb=()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();done();};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,fb);else fb();}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function hl(code){return esc(code).replace(/(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|(#include\s*&lt;[^&]*&gt;|#\w+)|\b(void|unsigned|char|int|static|if|else|while|interrupt|sfr|sbit|return|volatile|bit|code)\b|\b(0x[0-9A-Fa-f]+|\d+)\b/g,
+  (m,c,p,k,n)=>c?`<span class="cm">${c}</span>`:p?`<span class="pp">${p}</span>`:k?`<span class="kw">${k}</span>`:`<span class="nu">${n}</span>`);}
+function show(id,code){const e=$(id);e.innerHTML=hl(code);}
+
+/* ===== 汇总代码生成 ===== */
+const ORDER=['AUXR','WDT_CONTR','PSW','PCON','SCON','TMOD','T2MOD','T2CON','P0','P1','P2','P3','P4','IP','IPH','XICON','TCON','IE'];
+const EXTRA={AUXR:0x8E,IPH:0xB7,XICON:0xC0,WDT_CONTR:0xE1,P4:0xE8};
+const ISR=[
+ ['IE',0,0,'INT0_ISR','/* 外部中断0 (P3.2)，边沿触发时 IE0 硬件自动清零 */'],
+ ['IE',1,1,'Timer0_ISR','/* 模式0/1 需在此重装初值: TH0 = 0x??; TL0 = 0x??; */'],
+ ['IE',2,2,'INT1_ISR','/* 外部中断1 (P3.3) */'],
+ ['IE',3,3,'Timer1_ISR','/* 模式0/1 需在此重装初值: TH1 = 0x??; TL1 = 0x??; */'],
+ ['IE',4,4,'UART_ISR','if(RI)\n    {\n        RI = 0;          // 必须软件清零\n        /* dat = SBUF; */\n    }\n    if(TI)\n    {\n        TI = 0;          // 必须软件清零\n    }'],
+ ['IE',5,5,'Timer2_ISR','TF2 = 0;             // 必须软件清零\n    /* EXF2 = 0; (使用捕获/外部触发时) */'],
+ ['XICON',2,6,'INT2_ISR','/* 外部中断2 (P4.3) */'],
+ ['XICON',6,7,'INT3_ISR','/* 外部中断3 (P4.2) */']];
+function gen(){
+  const hdr=$('hdr').value,ids=ORDER.filter(id=>INC[id]);
+  let c=`#include <${hdr}>\n`;
+  const ex=ids.filter(id=>EXTRA[id]!==undefined);
+  if(ids.includes('T2MOD')&&hdr==='REG52.H')c+='sfr T2MOD = 0xC9;       // REG52.H 未定义 T2MOD\n';
+  if(ex.length){c+='/* STC89 扩展寄存器 (使用 STC 官方头文件时删除) */\n';ex.forEach(id=>c+=`sfr ${id.padEnd(9)} = ${hex(EXTRA[id])};\n`);}
+  c+='\nvoid MCU_Init(void)\n{\n';
+  if(!ids.length)c+='    /* 尚未选择寄存器：点击左侧任意位或使用顶部预设 */\n';
+  ids.forEach(id=>{const r=byId(id);
+    if(id==='TCON'||id==='T2CON'||id==='IE'){
+      const needT=(id==='TCON'&&(S.TCON&0x50))||(id==='T2CON'&&(S.T2CON&0x04)&&!(S.T2CON&0x30));
+      if(needT)c+=`    /* ↓ 启动前先装载定时初值 ${id==='TCON'?'TH0/TL0、TH1/TL1':'RCAP2H/L、TH2/TL2'}（见定时器计算器） */\n`;}
+    c+=`    ${(id+' ').padEnd(10)}= ${hex(S[id])};   // ${summary(r,S[id])}\n`;
+    if(id==='WDT_CONTR'&&(S[id]&0x20))c+=`    /* 喂狗: 主循环中定期执行 WDT_CONTR = ${hex(S[id]|0x10)}; */\n`;
+  });
+  c+='}\n';
+  if($('isr').checked){
+    const list=ISR.filter(x=>INC[x[0]]&&(S[x[0]]>>x[1]&1));
+    if(list.length&&!(INC.IE&&S.IE&0x80))c+='\n/* ⚠ 已开分中断但 EA=0，中断不会响应！ */\n';
+    list.forEach(x=>c+=`\nvoid ${x[3]}(void) interrupt ${x[2]}\n{\n    ${x[4]}\n}\n`);
+  }
+  show('out',c);
+}
+$('hdr').onchange=gen;$('isr').onchange=gen;
+$('clr').onclick=()=>{REGS.forEach(r=>{S[r.id]=r.rst;INC[r.id]=false;});refreshAll();};
+
+/* ===== 预设 ===== */
+const PRESETS=[
+ ['T0 16位定时中断',{TMOD:0x01,TCON:0x10,IE:0x82}],
+ ['串口 9600 (T1模式2)',{TMOD:0x20,TCON:0x40,SCON:0x50,PCON:0x00,IE:0x90},()=>{$('bd_src').value='1';$('bd_baud').value=9600;baud();}],
+ ['T0定时 + 串口',{TMOD:0x21,TCON:0x50,SCON:0x50,IE:0x92}],
+ ['INT0 下降沿中断',{TCON:0x01,IE:0x81}],
+ ['INT0+INT1 下降沿',{TCON:0x05,IE:0x85}],
+ ['T0 计数(P3.4脉冲)',{TMOD:0x05,TCON:0x10,IE:0x82}],
+ ['T1 测脉宽(GATE)',{TMOD:0x90,TCON:0x40}],
+ ['T2 16位自动重装',{T2CON:0x04,IE:0xA0},()=>{$('tc_tmr').value='2';timer();}],
+ ['T2 作波特率发生器',{T2CON:0x34,SCON:0x50,IE:0x90},()=>{$('bd_src').value='2';baud();}],
+ ['看门狗 ~2.3s',{WDT_CONTR:0x35}],
+];
+PRESETS.forEach(p=>{const b=document.createElement('button');b.textContent=p[0];
+  b.onclick=()=>{REGS.forEach(r=>{S[r.id]=r.rst;INC[r.id]=false;});Object.entries(p[1]).forEach(([k,v])=>{S[k]=v;INC[k]=true;});refreshAll();if(p[2])p[2]();};
+  $('presets').appendChild(b);});
+
+/* ===== 定时器计算器 ===== */
+function timer(){
+  const fosc=+$('tc_fosc').value,clk=+$('tc_clk').value,tm=+$('tc_tmr').value,unit=$('tc_unit').value,useInt=$('tc_int').checked;
+  $('tc_mode').disabled=tm===2;
+  const mode=tm===2?1:+$('tc_mode').value,cyc=clk/fosc; // μs/计数
+  const tUs=+$('tc_time').value*(unit==='ms'?1000:1);
+  const max=tm===2?65536:[8192,65536,256][mode];
+  let n=1,base=tUs,cnt=Math.round(tUs/cyc);
+  if(cnt>max){n=Math.ceil(cnt/max);
+    // 尝试找能整除的分段，使总时间准确
+    for(let k=n;k<n+200;k++){const b=tUs/k;if(Math.abs(b/cyc-Math.round(b/cyc))<0.02||k===n+199){n=k;break;}}
+    base=tUs/n;cnt=Math.round(base/cyc);}
+  if(!(fosc>0)||!(tUs>0)||cnt<1){$('tc_res').innerHTML='<div class="er">参数无效</div>';$('tc_code').textContent='';return;}
+  const init=max-cnt,act=cnt*cyc,err=(act-base)/base*100;
+  let TH,TL;
+  if(tm===2||mode===1){TH=init>>8;TL=init&0xFF;}else if(mode===0){TH=init>>5;TL=init&0x1F;}else{TH=TL=init;}
+  const T=tm===2?'2':String(tm),TR='TR'+T,ET='ET'+T;
+  $('tc_res').innerHTML=`<div>机器周期<b>${cyc.toFixed(4)} μs</b></div><div>单次最大定时<b>${(max*cyc).toFixed(1)} μs</b></div>`+
+    `<div>计数次数<b>${cnt}</b></div><div>初值<b>${init} (${hex(init,tm===2||mode===1?4:2)})</b></div>`+
+    (tm===2?`<div>RCAP2H / RCAP2L<b>${hex(TH)} / ${hex(TL)}</b></div>`:`<div>TH${T} / TL${T}<b>${hex(TH)} / ${hex(TL)}</b></div>`)+
+    `<div>单次实际定时<b>${act.toFixed(3)} μs</b></div><div>误差<b class="${Math.abs(err)<0.5?'ok':Math.abs(err)<2?'wa':'er'}">${err.toFixed(3)}%</b></div>`+
+    (n>1?`<div class="wa" style="color:#92400e">超出单次最大定时 → 每 ${base.toFixed(1)}μs 中断一次，计数 <b>${n}</b> 次</div>`:'');
+  const desc=`${+$('tc_time').value}${unit==='ms'?'ms':'us'} @${fosc}MHz ${clk}T`;
+  const reload=(tm!==2&&mode!==2)?`    TL${T} = ${hex(TL)};       // 重装初值 (模式${mode}无自动重装)\n    TH${T} = ${hex(TH)};\n`:'';
+  const body=n>1?`    if(++cnt >= ${n})        // ${n} × ${base.toFixed(1)}us\n    {\n        cnt = 0;\n        /* TODO: 定时到达，置标志位 */\n    }\n`:'    /* TODO: 定时到达，置标志位或计数 */\n';
+  let c;
+  if(tm===2){
+    c=`void Timer2_Init(void)      // ${desc}\n{\n    T2CON = 0x00;            // 16位自动重装、定时模式\n    RCAP2L = ${hex(TL)};       // 重装值\n    RCAP2H = ${hex(TH)};\n    TL2 = ${hex(TL)};\n    TH2 = ${hex(TH)};\n`+
+      (useInt?'    ET2 = 1;                 // 允许T2中断\n    EA = 1;                  // 开总中断\n':'')+'    TR2 = 1;                 // 启动T2\n}\n';
+    if(useInt)c+=`\nvoid Timer2_ISR(void) interrupt 5\n{\n${n>1?'    static unsigned int cnt = 0;\n':''}    TF2 = 0;                 // T2 溢出标志必须软件清零\n${body}}\n`;
+  }else{
+    const mask=tm===0?'0xF0':'0x0F',val=tm===0?hex(mode):hex(mode<<4);
+    c=`void Timer${T}_Init(void)      // ${desc}\n{\n    TMOD &= ${mask};          // 清除T${T}模式位\n    TMOD |= ${val};          // T${T} 模式${mode}${['(13位)','(16位)','(8位自动重装)'][mode]}\n`+
+      `    TL${T} = ${hex(TL)};             // 初值低位\n    TH${T} = ${hex(TH)};             // 初值高位${mode===2?'(重装值)':''}\n    TF${T} = 0;                 // 清溢出标志\n`+
+      (useInt?`    ${ET} = 1;                 // 允许T${T}中断\n    EA = 1;                  // 开总中断\n`:'')+`    ${TR} = 1;                 // 启动T${T}\n}\n`;
+    if(useInt)c+=`\nvoid Timer${T}_ISR(void) interrupt ${tm===0?1:3}\n{\n${n>1?'    static unsigned int cnt = 0;\n':''}${reload}${body}}\n`;
+    else c+=`\n/* 查询方式: while(!TF${T}); TF${T} = 0;${reload?' 然后重装 TH/TL':''} */\n`;
+  }
+  show('tc_code',c);
+}
+['tc_fosc','tc_clk','tc_tmr','tc_mode','tc_time','tc_unit','tc_int'].forEach(i=>{$(i).addEventListener('input',timer);$(i).addEventListener('change',timer);});
+
+
+/* ===== 波特率计算器 ===== */
+const BAUDS=[1200,2400,4800,9600,14400,19200,28800,38400,57600,115200];
+function calcB(fosc,clk,src,smod,b){
+  const f=fosc*1e6*(12/clk);
+  if(src===1){
+    const n=Math.round((1<<smod)*f/(32*12*b));
+    if(n<1||n>256)return null;
+    const th=256-n,act=(1<<smod)*f/(32*12*n),err=(act-b)/b*100;
+    return {th,rcap:null,act,err};
+  }else{
+    const n=Math.round(f/(32*b));
+    if(n<1||n>65536)return null;
+    const rcap=65536-n,act=f/(32*n),err=(act-b)/b*100;
+    return {th:null,rcap,act,err};
+  }
+}
+function baud(){
+  const fosc=+$('bd_fosc').value,clk=+$('bd_clk').value,src=+$('bd_src').value,smod=+$('bd_smod').value,b=+$('bd_baud').value,mode=+$('bd_mode').value,useInt=$('bd_int').checked;
+  $('bd_smod').disabled=src===2;
+  const r=calcB(fosc,clk,src,smod,b);
+  if(!r){$('bd_res').innerHTML='<div class="er">无法在该晶振下生成此波特率（超出计数范围），请尝试开启 SMOD=1 或切换为 T2 发生器</div>';$('bd_code').textContent='';}
+  else{
+    const ec=Math.abs(r.err)<0.5?'ok':Math.abs(r.err)<2.5?'wa':'er';
+    $('bd_res').innerHTML=(src===1?`<div>TH1 / TL1<b>${hex(r.th)} (${r.th})</b></div>`:`<div>RCAP2H / RCAP2L<b>${hex(r.rcap>>8)} / ${hex(r.rcap&0xFF)} (${hex(r.rcap,4)})</b></div>`)+
+      `<div>实际波特率<b>${r.act.toFixed(1)} bps</b></div><div>误差<b class="${ec}">${r.err.toFixed(2)}% ${Math.abs(r.err)<2?'(可用)':'(误差过大!)'}</b></div>`;
+    const scon=mode===1?0x50:0xD0;
+    let c=`void UART_Init(void)        // ${b}bps @${fosc}MHz ${clk}T\n{\n`;
+    if(src===1){
+      c+=`    PCON ${smod?'|= 0x80':'&= 0x7F'};          // SMOD=${smod} 波特率${smod?'加倍':'不加倍'}\n`+
+         `    SCON = ${hex(scon)};            // 方式${mode} (${mode===1?'8':'9'}位UART)，REN=1允许接收\n`+
+         `    TMOD &= 0x0F;           // 清除T1模式位\n`+
+         `    TMOD |= 0x20;           // T1 模式2 (8位自动重装)\n`+
+         `    TL1 = ${hex(r.th)};             // 定时初值\n`+
+         `    TH1 = ${hex(r.th)};             // 重装值\n`+
+         `    ET1 = 0;                // 禁止T1中断\n`+
+         `    TR1 = 1;                // 启动T1\n`;
+    }else{
+      const rh=hex(r.rcap>>8),rl=hex(r.rcap&0xFF);
+      c+=`    SCON = ${hex(scon)};            // 方式${mode}，REN=1允许接收\n`+
+         `    RCAP2L = ${rl};          // T2重装值低位\n`+
+         `    RCAP2H = ${rh};          // T2重装值高位\n`+
+         `    TL2 = ${rl};\n    TH2 = ${rh};\n`+
+         `    T2CON = 0x34;           // RCLK=1, TCLK=1, TR2=1 (T2作波特率发生器)\n`;
+    }
+    if(useInt)c+=`    ES = 1;                 // 允许串口中断\n    EA = 1;                 // 开总中断\n`;
+    c+=`}\n\nvoid UART_SendByte(unsigned char dat)\n{\n    SBUF = dat;\n    while(!TI);             // 等待发送完成\n    TI = 0;                 // 必须软件清零\n}\n`;
+    if(useInt)c+=`\nvoid UART_ISR(void) interrupt 4\n{\n    unsigned char dat;\n    if(RI)\n    {\n        RI = 0;             // 必须软件清零\n        dat = SBUF;         // 读取接收字节\n    }\n}\n`;
+    show('bd_code',c);
+  }
+  // 常用波特率速查表
+  let th=`<thead><tr><th>常用波特率</th><th class="c">T1 (SMOD=0)</th><th class="c">T1 (SMOD=1)</th><th class="c">T2 (RCAP2H/L)</th></tr></thead><tbody>`;
+  BAUDS.forEach(x=>{
+    const r0=calcB(fosc,clk,1,0,x),r1=calcB(fosc,clk,1,1,x),r2=calcB(fosc,clk,2,0,x);
+    const fmt=(o,is2)=>!o?'<span style="color:#9ca3af">不支持</span>':`<span class="mono">${is2?hex(o.rcap,4):hex(o.th)}</span> <span class="${Math.abs(o.err)<0.5?'ok':Math.abs(o.err)<2.5?'wa':'er'}">(${o.err.toFixed(2)}%)</span>`;
+    th+=`<tr class="clk ${x===b?'sel':''}" data-b="${x}"><td><b>${x}</b> bps</td><td class="c">${fmt(r0,0)}</td><td class="c">${fmt(r1,0)}</td><td class="c">${fmt(r2,1)}</td></tr>`;
+  });
+  $('bd_tbl').innerHTML=th+'</tbody>';
+  $('bd_tbl').querySelectorAll('tr[data-b]').forEach(tr=>tr.onclick=()=>{$('bd_baud').value=tr.dataset.b;baud();});
+}
+['bd_fosc','bd_clk','bd_src','bd_smod','bd_baud','bd_mode','bd_int'].forEach(i=>{$(i).addEventListener('input',baud);$(i).addEventListener('change',baud);});
+
+/* ===== SFR 地址总表 ===== */
+const SFRS=[
+ ['80H','P0','可位寻址','0xFF','P0端口 (开漏输出，作I/O需外接上拉电阻)','P0'],
+ ['81H','SP','不可','0x07','堆栈指针 (复位指向 07H)',''],
+ ['82H','DPL','不可','0x00','数据指针 DPTR 低8位',''],
+ ['83H','DPH','不可','0x00','数据指针 DPTR 高8位',''],
+ ['87H','PCON','不可','0x00','电源控制与波特率加倍 (SMOD 在 D7)','PCON'],
+ ['88H','TCON','可位寻址','0x00','T0/T1 控制与外部中断 INT0/INT1 标志','TCON'],
+ ['89H','TMOD','不可','0x00','T0/T1 工作模式寄存器 (高4位T1，低4位T0)','TMOD'],
+ ['8AH','TL0','不可','0x00','定时器0 计数低8位','calc-timer'],
+ ['8BH','TL1','不可','0x00','定时器1 计数低8位','calc-timer'],
+ ['8CH','TH0','不可','0x00','定时器0 计数高8位','calc-timer'],
+ ['8DH','TH1','不可','0x00','定时器1 计数高8位','calc-timer'],
+ ['8EH','AUXR','不可','0x00','[STC89] 辅助寄存器 (ALEOFF / EXTRAM)','AUXR'],
+ ['90H','P1','可位寻址','0xFF','P1端口 (P1.0=T2, P1.1=T2EX)','P1'],
+ ['98H','SCON','可位寻址','0x00','串口控制寄存器','SCON'],
+ ['99H','SBUF','不可','不定','串口数据缓冲器 (读写同地址，物理上分为发送/接收两个寄存器)','calc-baud'],
+ ['A0H','P2','可位寻址','0xFF','P2端口 (高8位地址总线)','P2'],
+ ['A8H','IE','可位寻址','0x00','中断允许寄存器 (EA 总开关在 D7)','IE'],
+ ['B0H','P3','可位寻址','0xFF','P3端口 (第二功能: 串口/外部中断/定时器输入/读写控制)','P3'],
+ ['B7H','IPH','不可','0x00','[STC89] 中断优先级高位寄存器','IPH'],
+ ['B8H','IP','可位寻址','0x00','中断优先级低位寄存器','IP'],
+ ['C0H','XICON','可位寻址','0x00','[STC89] 辅助中断控制 (INT2 / INT3)','XICON'],
+ ['C8H','T2CON','可位寻址','0x00','[52特有] 定时器2 控制寄存器','T2CON'],
+ ['C9H','T2MOD','不可','0x00','[52特有] 定时器2 模式寄存器','T2MOD'],
+ ['CAH','RCAP2L','不可','0x00','[52特有] 定时器2 捕获/重装低8位','calc-timer'],
+ ['CBH','RCAP2H','不可','0x00','[52特有] 定时器2 捕获/重装高8位','calc-timer'],
+ ['CCH','TL2','不可','0x00','[52特有] 定时器2 计数低8位','calc-timer'],
+ ['CDH','TH2','不可','0x00','[52特有] 定时器2 计数高8位','calc-timer'],
+ ['D0H','PSW','可位寻址','0x00','程序状态字 (CY / AC / OV / 奇偶P / 寄存器组RS1:RS0)','PSW'],
+ ['E0H','ACC','可位寻址','0x00','累加器 A',''],
+ ['E1H','WDT_CONTR','不可','0x00','[STC89] 看门狗控制寄存器','WDT_CONTR'],
+ ['E8H','P4','可位寻址','0x0F','[STC89] P4端口 (P4.2=INT3, P4.3=INT2)','P4'],
+ ['F0H','B','可位寻址','0x00','B寄存器 (乘除法指令辅助)','']
+];
+$('sfr_tbl').innerHTML='<thead><tr><th class="c">地址</th><th>名称</th><th class="c">位寻址</th><th class="c">复位值</th><th>说明</th></tr></thead><tbody>'+
+  SFRS.map(x=>{const href=x[5]?(x[5].startsWith('calc')?'#'+x[5]:'#reg-'+x[5]):'';
+    return `<tr><td class="c mono">${x[0]}</td><td class="mono"><b>${href?`<a href="${href}" style="color:var(--pri)">${x[1]}</a>`:x[1]}</b></td>`+
+      `<td class="c">${x[2]==='可位寻址'?'<span class="tag b">可位寻址</span>':'不可'}</td><td class="c mono">${x[3]}</td><td>${x[4]}</td></tr>`;}).join('')+'</tbody>';
+
+/* ===== 初始化启动 ===== */
+refreshAll();
+timer();
+baud();
+</script>
+</body>
+</html>
